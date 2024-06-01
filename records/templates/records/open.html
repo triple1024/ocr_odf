@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Open PDF</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- Bootstrap CSS v5.2.1 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
+</head>
+
+<body>
+    <div class="container">
+        <h2>Upload PDF</h2>
+        <form method="post" action="/records/open/" enctype="multipart/form-data" id="uploadForm">
+            <input type="hidden" name="csrfmiddlewaretoken" value="lSaRI1Up8u1lYWRjfKVHPlCJIsF6BU4iHsMH4QJmIaEeogBT2l1zvNXGpGGGqcNJ">
+            <input type="file" name="pdf" required id="pdfFile">
+            <button type="submit" class="btn btn-primary">PDFを開く</button>
+        </form>
+        <p id="fileNameDisplay">選択されていません</p>
+        <button id="resetFileNameButton" class="btn btn-secondary">ファイル名をリセット</button>
+    </div>
+
+    <!-- 成功/エラーメッセージを表示するエリア -->
+    <div class="container mt-3">
+        <div id="message" class="alert" style="display: none;"></div>
+    </div>
+
+    <script>
+        var selectedFileName = ""; // グローバル変数としてファイル名を保持
+
+            document.getElementById('uploadForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // デフォルトのフォーム送信を防止
+                var fileNameDisplay = document.getElementById('fileNameDisplay');
+                if (selectedFileName) {
+                    fileNameDisplay.textContent = "選択されたファイル名: " + selectedFileName;
+                } else {
+                    fileNameDisplay.textContent = "選択されていません";
+                }
+
+                var form = event.target;
+                var formData = new FormData(form);
+                fetch(form.action, {
+                    method: form.method,
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('PDFのアップロード中にエラーが発生しました.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    var messageDiv = document.getElementById('message');
+                    if (data.success_message) {
+                        messageDiv.textContent = data.success_message;
+                        messageDiv.className = 'alert alert-success';
+                    } else if (data.error_message) {
+                        messageDiv.textContent = data.error_message;
+                        messageDiv.className = 'alert alert-danger';
+                    }
+                    messageDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    var messageDiv = document.getElementById('message');
+                    messageDiv.textContent = error.message; // エラーメッセージを表示する
+                    messageDiv.className = 'alert alert-danger';
+                    messageDiv.style.display = 'block';
+                });
+            });
+
+
+        document.getElementById('pdfFile').addEventListener('change', function(event) {
+            var fileInput = event.target;
+            if (fileInput.files.length > 0) {
+                selectedFileName = fileInput.files[0].name;
+            } else {
+                selectedFileName = ""; // ファイルが選択されていない場合は空にする
+            }
+            updateFileNameDisplay(); // ファイル名の表示を更新する
+        });
+
+        document.getElementById('resetFileNameButton').addEventListener('click', function(event) {
+            event.preventDefault(); // デフォルトのボタンの動作を防止
+            resetFileName(); // ファイル名をリセットする
+            updateFileNameDisplay(); // ファイル名の表示を更新する
+        });
+
+        // ファイル名を表示する
+        function updateFileNameDisplay() {
+            var fileNameDisplay = document.getElementById('fileNameDisplay');
+            if (selectedFileName) {
+                fileNameDisplay.textContent = "選択されたファイル名: " + selectedFileName;
+            } else {
+                fileNameDisplay.textContent = "選択されていません";
+            }
+        }
+
+        // ファイル名をリセットする
+        function resetFileName() {
+            selectedFileName = "";
+            document.getElementById('pdfFile').value = ""; // ファイル選択フィールドの値をリセット
+        }
+    </script>
+
+    <!-- Bootstrap JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+</body>
+</html>
